@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>识字卡片·正式版</title>
+<style>
+  :root {
+    --c-bg:#f5f3ee; --c-fg:#2b2b2b; --c-muted:#77726a; --c-card:#fff;
+    --c-border:#ddd6cc; --c-accent:#4f7ae0; --c-btn-text:#fff;
+    --c-ok:#16a34a; --c-no:#dc2626; --c-gem:#8b5cf6;
+  }
+  body.dark {
+    --c-bg:#1c1c20; --c-fg:#ececec; --c-muted:#9a958d; --c-card:#2a2a30;
+    --c-border:#44444c; --c-accent:#6b93ea; --c-btn-text:#10131a;
+    --c-ok:#34d374; --c-no:#f05a5a; --c-gem:#b18cff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:18px;background:var(--c-bg);color:var(--c-fg);
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+  .card{max-width:420px;margin:0 auto}
+  .theme-toggle{position:fixed;top:12px;right:12px;z-index:10;font-size:20px;
+    border:1px solid var(--c-border);background:var(--c-card);color:var(--c-fg);
+    border-radius:50%;width:40px;height:40px;cursor:pointer}
+  .zi{font-size:88px;font-weight:700;text-align:center;margin:10px 0 4px;font-family:"KaiTi","STKaiti",serif}
+  .hint{text-align:center;font-size:14px;color:var(--c-muted);margin-bottom:14px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .opt{padding:14px 8px;border:1.5px solid var(--c-border);border-radius:12px;background:var(--c-card);color:var(--c-fg);
+    font-size:20px;text-align:center;cursor:pointer;user-select:none;transition:all .15s}
+  .opt:hover{border-color:var(--c-accent)}
+  .opt.right{border-color:var(--c-ok);background:rgba(34,197,94,.15)}
+  .opt.wrong{border-color:var(--c-no);background:rgba(239,68,68,.15)}
+  .reveal{display:none;margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--c-card);border:1.5px solid var(--c-border)}
+  .reveal.show{display:block}
+  .reveal .py{font-size:22px;font-weight:600}
+  .reveal .lesson{font-size:13px;color:var(--c-muted)}
+  .next{margin-top:14px;width:100%;padding:13px;border:none;border-radius:12px;
+    background:var(--c-accent);color:var(--c-btn-text);font-size:17px;font-weight:700;cursor:pointer}
+  .score{display:flex;justify-content:space-between;align-items:center;font-size:15px}
+  .diamonds{color:var(--c-gem);font-weight:700}
+  .done{text-align:center;padding:26px 10px}
+  .done .big{font-size:46px}
+  .done .msg{margin:10px 0 14px;font-size:16px;color:var(--c-muted)}
+  .result{margin:12px 0;padding:12px;border:1.5px dashed var(--c-border);border-radius:12px;
+    background:var(--c-card);font-size:14px;text-align:left;user-select:all;word-break:break-all}
+  .feedback{text-align:center;font-size:15px;height:22px;margin-top:10px;font-weight:600}
+  .fb-ok{color:var(--c-ok)} .fb-no{color:var(--c-no)}
+  button.small{padding:10px;width:100%;margin-top:8px;border:1.5px solid var(--c-border);border-radius:12px;
+    background:var(--c-card);color:var(--c-fg);font-size:15px;cursor:pointer}
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()" title="切换明暗">☀️</button>
+<div class="card" id="app"></div>
+<script>
+function toggleTheme(){
+  const d = document.body.classList.toggle("dark");
+  document.querySelector(".theme-toggle").textContent = d ? "☀️" : "🌙";
+  try { localStorage.setItem("theme", d ? "dark" : "light"); } catch(e){}
+}
+try { const saved = localStorage.getItem("theme"); if (saved !== "light") { document.body.classList.add("dark"); document.querySelector(".theme-toggle").textContent = "☀️"; } } catch(e){ document.body.classList.add("dark"); document.querySelector(".theme-toggle").textContent = "☀️"; }
+</script>
+<script>
+const CARDS = [{"zi":"霜","py":"shuāng","lesson":"第1课"},{"zi":"吹","py":"chuī","lesson":"第1课"},{"zi":"落","py":"luò","lesson":"第1课"},{"zi":"降","py":"jiàng","lesson":"第1课"},{"zi":"飘","py":"piāo","lesson":"第1课"},{"zi":"游","py":"yóu","lesson":"第1课"},{"zi":"池","py":"chí","lesson":"第1课"},{"zi":"入","py":"rù","lesson":"第1课"},{"zi":"热","py":"rè","lesson":"第1课"},{"zi":"爱","py":"ài","lesson":"第1课"},{"zi":"共","py":"gòng","lesson":"第1课"},{"zi":"产","py":"chǎn","lesson":"第1课"},{"zi":"党","py":"dǎng","lesson":"第1课"},{"zi":"太","py":"tài","lesson":"第1课"},{"zi":"阳","py":"yáng","lesson":"第1课"},{"zi":"光","py":"guāng","lesson":"第1课"},{"zi":"怀","py":"huái","lesson":"第1课"},{"zi":"抱","py":"bào","lesson":"第1课"},{"zi":"幸","py":"xìng","lesson":"第1课"},{"zi":"福","py":"fú","lesson":"第1课"},{"zi":"成","py":"chéng","lesson":"第1课"},{"zi":"氏","py":"shì","lesson":"第2课"},{"zi":"什","py":"shén","lesson":"第2课"},{"zi":"李","py":"lǐ","lesson":"第2课"},{"zi":"张","py":"zhāng","lesson":"第2课"},{"zi":"弓","py":"gōng","lesson":"第2课"},{"zi":"古","py":"gǔ","lesson":"第2课"},{"zi":"胡","py":"hú","lesson":"第2课"},{"zi":"吴","py":"wú","lesson":"第2课"},{"zi":"言","py":"yán","lesson":"第2课"},{"zi":"孙","py":"sūn","lesson":"第2课"},{"zi":"井","py":"jǐng","lesson":"第2课"},{"zi":"城","py":"chéng","lesson":"第2课"},{"zi":"村","py":"cūn","lesson":"第2课"},{"zi":"毛","py":"máo","lesson":"第2课"},{"zi":"主","py":"zhǔ","lesson":"第2课"},{"zi":"席","py":"xí","lesson":"第2课"},{"zi":"住","py":"zhù","lesson":"第2课"},{"zi":"乡","py":"xiāng","lesson":"第2课"},{"zi":"亲","py":"qīn","lesson":"第2课"},{"zi":"战","py":"zhàn","lesson":"第2课"},{"zi":"士","py":"shì","lesson":"第2课"},{"zi":"想","py":"xiǎng","lesson":"第2课"},{"zi":"念","py":"niàn","lesson":"第2课"},{"zi":"河","py":"hé","lesson":"第3课"},{"zi":"晴","py":"qíng","lesson":"第3课"},{"zi":"眼","py":"yǎn","lesson":"第3课"},{"zi":"睛","py":"jīng","lesson":"第3课"},{"zi":"保","py":"bǎo","lesson":"第3课"},{"zi":"护","py":"hù","lesson":"第3课"},{"zi":"苗","py":"miáo","lesson":"第3课"},{"zi":"吃","py":"chī","lesson":"第3课"},{"zi":"事","py":"shì","lesson":"第3课"},{"zi":"情","py":"qíng","lesson":"第3课"},{"zi":"请","py":"qǐng","lesson":"第3课"},{"zi":"让","py":"ràng","lesson":"第3课"},{"zi":"告","py":"gào","lesson":"第3课"},{"zi":"诉","py":"sù","lesson":"第3课"},{"zi":"走","py":"zǒu","lesson":"第3课"},{"zi":"京","py":"jīng","lesson":"第3课"},{"zi":"座","py":"zuò","lesson":"第3课"},{"zi":"安","py":"ān","lesson":"第3课"},{"zi":"广","py":"guǎng","lesson":"第3课"},{"zi":"场","py":"chǎng","lesson":"第3课"},{"zi":"非","py":"fēi","lesson":"第3课"},{"zi":"宽","py":"kuān","lesson":"第3课"},{"zi":"丽","py":"lì","lesson":"第3课"},{"zi":"洁","py":"jié","lesson":"第3课"},{"zi":"猜","py":"cāi","lesson":"第4课"},{"zi":"边","py":"biān","lesson":"第4课"},{"zi":"凉","py":"liáng","lesson":"第4课"},{"zi":"喜","py":"xǐ","lesson":"第4课"},{"zi":"欢","py":"huān","lesson":"第4课"},{"zi":"时","py":"shí","lesson":"第4课"},{"zi":"怕","py":"pà","lesson":"第4课"},{"zi":"攻","py":"gōng","lesson":"第4课"},{"zi":"令","py":"lìng","lesson":"第4课"},{"zi":"感","py":"gǎn","lesson":"第4课"},{"zi":"动","py":"dòng","lesson":"第4课"},{"zi":"万","py":"wàn","lesson":"第4课"},{"zi":"无","py":"wú","lesson":"第4课"},{"zi":"玩","py":"wán","lesson":"第4课"},{"zi":"得","py":"dé","lesson":"第4课"},{"zi":"急","py":"jí","lesson":"第4课"},{"zi":"直","py":"zhí","lesson":"第4课"},{"zi":"哭","py":"kū","lesson":"第4课"},{"zi":"跟","py":"gēn","lesson":"第4课"},{"zi":"忽","py":"hū","lesson":"第4课"},{"zi":"然","py":"rán","lesson":"第4课"},{"zi":"听","py":"tīng","lesson":"第4课"},{"zi":"喊","py":"hǎn","lesson":"第4课"},{"zi":"快","py":"kuài","lesson":"第4课"},{"zi":"己","py":"jǐ","lesson":"第4课"},{"zi":"背","py":"bèi","lesson":"第4课"},{"zi":"识","py":"shí","lesson":"语文园地一"},{"zi":"组","py":"zǔ","lesson":"语文园地一"},{"zi":"计","py":"jì","lesson":"语文园地一"},{"zi":"算","py":"suàn","lesson":"语文园地一"},{"zi":"减","py":"jiǎn","lesson":"语文园地一"},{"zi":"式","py":"shì","lesson":"语文园地一"},{"zi":"图","py":"tú","lesson":"语文园地一"},{"zi":"形","py":"xíng","lesson":"语文园地一"},{"zi":"卡","py":"kǎ","lesson":"语文园地一"},{"zi":"合","py":"hé","lesson":"语文园地一"},{"zi":"唱","py":"chàng","lesson":"语文园地一"},{"zi":"团","py":"tuán","lesson":"语文园地一"},{"zi":"认","py":"rèn","lesson":"语文园地二"},{"zi":"连","py":"lián","lesson":"语文园地二"},{"zi":"选","py":"xuǎn","lesson":"语文园地二"},{"zi":"圈","py":"quān","lesson":"语文园地二"},{"zi":"涂","py":"tú","lesson":"语文园地二"},{"zi":"填","py":"tián","lesson":"语文园地二"},{"zi":"试","py":"shì","lesson":"语文园地二"},{"zi":"练","py":"liàn","lesson":"语文园地二"},{"zi":"只","py":"zhǐ","lesson":"第5课"},{"zi":"很","py":"hěn","lesson":"第5课"},{"zi":"孤","py":"gū","lesson":"第5课"},{"zi":"单","py":"dān","lesson":"第5课"},{"zi":"种","py":"zhǒng","lesson":"第5课"},{"zi":"每","py":"měi","lesson":"第5课"},{"zi":"都","py":"dōu","lesson":"第5课"},{"zi":"邻","py":"lín","lesson":"第5课"},{"zi":"居","py":"jū","lesson":"第5课"},{"zi":"叫","py":"jiào","lesson":"第5课"},{"zi":"招","py":"zhāo","lesson":"第5课"},{"zi":"呼","py":"hū","lesson":"第5课"},{"zi":"乐","py":"lè","lesson":"第5课"},{"zi":"物","py":"wù","lesson":"第5课"},{"zi":"捉","py":"zhuō","lesson":"第5课"},{"zi":"迷","py":"mí","lesson":"第5课"},{"zi":"藏","py":"cáng","lesson":"第5课"},{"zi":"造","py":"zào","lesson":"第5课"},{"zi":"蚂","py":"mǎ","lesson":"第5课"},{"zi":"蚁","py":"yǐ","lesson":"第5课"},{"zi":"运","py":"yùn","lesson":"第5课"},{"zi":"食","py":"shí","lesson":"第5课"},{"zi":"粮","py":"liáng","lesson":"第5课"},{"zi":"房","py":"fáng","lesson":"第5课"},{"zi":"结","py":"jié","lesson":"第5课"},{"zi":"网","py":"wǎng","lesson":"第5课"},{"zi":"怎","py":"zěn","lesson":"第6课"},{"zi":"独","py":"dú","lesson":"第6课"},{"zi":"跳","py":"tiào","lesson":"第6课"},{"zi":"绳","py":"shéng","lesson":"第6课"},{"zi":"当","py":"dāng","lesson":"第6课"},{"zi":"还","py":"hái","lesson":"第6课"},{"zi":"乐","py":"lè","lesson":"第6课"},{"zi":"得","py":"dé","lesson":"第6课"},{"zi":"羽","py":"yǔ","lesson":"第6课"},{"zi":"球","py":"qiú","lesson":"第6课"},{"zi":"劲","py":"jìn","lesson":"第6课"},{"zi":"轮","py":"lún","lesson":"第6课"},{"zi":"排","py":"pái","lesson":"第6课"},{"zi":"圆","py":"yuán","lesson":"第6课"},{"zi":"严","py":"yán","lesson":"第6课"},{"zi":"寒","py":"hán","lesson":"第6课"},{"zi":"酷","py":"kù","lesson":"第6课"},{"zi":"暑","py":"shǔ","lesson":"第6课"},{"zi":"暖","py":"nuǎn","lesson":"第6课"},{"zi":"晨","py":"chén","lesson":"第6课"},{"zi":"细","py":"xì","lesson":"第6课"},{"zi":"朝","py":"cháo","lesson":"第6课"},{"zi":"霞","py":"xiá","lesson":"第6课"},{"zi":"夕","py":"xī","lesson":"第6课"},{"zi":"杨","py":"yáng","lesson":"第6课"},{"zi":"香","py":"xiāng","lesson":"第6课"},{"zi":"母","py":"mǔ","lesson":"语文园地三"},{"zi":"页","py":"yè","lesson":"语文园地三"},{"zi":"止","py":"zhǐ","lesson":"语文园地三"},{"zi":"斤","py":"jīn","lesson":"语文园地三"},{"zi":"寸","py":"cùn","lesson":"语文园地三"},{"zi":"丁","py":"dīng","lesson":"语文园地三"},{"zi":"千","py":"qiān","lesson":"语文园地三"},{"zi":"全","py":"quán","lesson":"语文园地三"},{"zi":"元","py":"yuán","lesson":"语文园地三"},{"zi":"静","py":"jìng","lesson":"第7课"},{"zi":"思","py":"sī","lesson":"第7课"},{"zi":"床","py":"chuáng","lesson":"第7课"},{"zi":"疑","py":"yí","lesson":"第7课"},{"zi":"举","py":"jǔ","lesson":"第7课"},{"zi":"望","py":"wàng","lesson":"第7课"},{"zi":"低","py":"dī","lesson":"第7课"},{"zi":"故","py":"gù","lesson":"第7课"},{"zi":"操","py":"cāo","lesson":"第7课"},{"zi":"拔","py":"bá","lesson":"第7课"},{"zi":"拍","py":"pāi","lesson":"第7课"},{"zi":"跑","py":"pǎo","lesson":"第7课"},{"zi":"踢","py":"tī","lesson":"第7课"},{"zi":"玲","py":"líng","lesson":"第7课"},{"zi":"真","py":"zhēn","lesson":"第7课"},{"zi":"闹","py":"nào","lesson":"第7课"},{"zi":"丢","py":"diū","lesson":"第7课"},{"zi":"沙","py":"shā","lesson":"第7课"},{"zi":"身","py":"shēn","lesson":"第7课"},{"zi":"体","py":"tǐ","lesson":"第7课"},{"zi":"胆","py":"dǎn","lesson":"第8课"},{"zi":"敢","py":"gǎn","lesson":"第8课"},{"zi":"勇","py":"yǒng","lesson":"第8课"},{"zi":"讲","py":"jiǎng","lesson":"第8课"},{"zi":"窗","py":"chuāng","lesson":"第8课"},{"zi":"乱","py":"luàn","lesson":"第8课"},{"zi":"拉","py":"lā","lesson":"第8课"},{"zi":"样","py":"yàng","lesson":"第8课"},{"zi":"笑","py":"xiào","lesson":"第8课"},{"zi":"再","py":"zài","lesson":"第8课"},{"zi":"睡","py":"shuì","lesson":"第8课"},{"zi":"觉","py":"jué","lesson":"第8课"},{"zi":"之","py":"zhī","lesson":"第8课"},{"zi":"初","py":"chū","lesson":"第8课"},{"zi":"相","py":"xiāng","lesson":"第8课"},{"zi":"近","py":"jìn","lesson":"第8课"},{"zi":"习","py":"xí","lesson":"第8课"},{"zi":"远","py":"yuǎn","lesson":"第8课"},{"zi":"教","py":"jiào","lesson":"第8课"},{"zi":"道","py":"dào","lesson":"第8课"},{"zi":"专","py":"zhuān","lesson":"第8课"},{"zi":"幼","py":"yòu","lesson":"第8课"},{"zi":"玉","py":"yù","lesson":"第8课"},{"zi":"知","py":"zhī","lesson":"第8课"},{"zi":"义","py":"yì","lesson":"第8课"},{"zi":"端","py":"duān","lesson":"第9课"},{"zi":"粽","py":"zòng","lesson":"第9课"},{"zi":"节","py":"jié","lesson":"第9课"},{"zi":"总","py":"zǒng","lesson":"第9课"},{"zi":"煮","py":"zhǔ","lesson":"第9课"},{"zi":"盼","py":"pàn","lesson":"第9课"},{"zi":"米","py":"mǐ","lesson":"第9课"},{"zi":"枣","py":"zǎo","lesson":"第9课"},{"zi":"甜","py":"tián","lesson":"第9课"},{"zi":"分","py":"fēn","lesson":"第9课"},{"zi":"鲜","py":"xiān","lesson":"第9课"},{"zi":"肉","py":"ròu","lesson":"第9课"},{"zi":"了","py":"le","lesson":"第9课"},{"zi":"册","py":"cè","lesson":"语文园地四"},{"zi":"支","py":"zhī","lesson":"语文园地四"},{"zi":"台","py":"tái","lesson":"语文园地四"},{"zi":"电","py":"diàn","lesson":"语文园地四"},{"zi":"视","py":"shì","lesson":"语文园地四"},{"zi":"部","py":"bù","lesson":"语文园地四"},{"zi":"机","py":"jī","lesson":"语文园地四"},{"zi":"衣","py":"yī","lesson":"语文园地四"},{"zi":"裤","py":"kù","lesson":"语文园地四"},{"zi":"被","py":"bèi","lesson":"语文园地四"}];
+const ROUND = 10;
+const state = {deck:[], i:0, score:0, diamond:0, answered:false, results:[], phase:"title"};
+
+function shuffle(a){return a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);}
+
+function render(){
+  const app = document.getElementById("app");
+  if (state.phase==="title"){
+    app.innerHTML = `<div class="done">
+      <div class="big">📚</div>
+      <div class="msg">一年级下册 · 识字测试（第1-9课 + 园地一~四）<br>每轮 ${ROUND} 个字，准备好了吗？</div>
+      <button class="next" onclick="startRound()">开始测试 ▶</button></div>`;
+    return;
+  }
+  if (state.phase==="result"){ renderResult(); return; }
+  const c = state.deck[state.i];
+  const pool = CARDS.filter(x=>x.zi!==c.zi).map(x=>x.py);
+  const opts = shuffle([c.py, ...shuffle(pool).slice(0,3)]);
+  app.innerHTML = `
+    <div class="score"><span>第 ${state.i+1} / ${state.deck.length} 张</span><span class="diamonds">💎 × ${state.diamond}</span></div>
+    <div class="zi">${c.zi}</div>
+    <div class="hint">这个字怎么读？选一选吧 👇</div>
+    <div class="opts">${opts.map(o=>`<div class="opt" data-py="${o}" onclick="pick(this)">${o}</div>`).join("")}</div>
+    <div class="feedback" id="fb"></div>
+    <div class="reveal" id="reveal">
+      <div class="py">${c.zi} ${c.py}</div>
+      <div class="lesson">📖 来自 ${c.lesson}</div>
+    </div>
+    <button class="next" id="nextBtn" style="display:none" onclick="nextCard()">下一张 →</button>`;
+}
+
+function startRound(){
+  state.deck = shuffle(CARDS).slice(0,ROUND);
+  state.i=0; state.score=0; state.diamond=0; state.results=[]; state.answered=false;
+  state.phase="quiz"; render();
+}
+
+function pick(el){
+  if (state.answered) return;
+  state.answered = true;
+  const c = state.deck[state.i];
+  const ok = el.dataset.py === c.py;
+  el.classList.add(ok?"right":"wrong");
+  if (!ok) [...document.querySelectorAll(".opt")].find(o=>o.dataset.py===c.py).classList.add("right");
+  if (ok){ state.score++; state.diamond++; }
+  state.results.push({zi:c.zi, py:c.py, lesson:c.lesson, ok});
+  const fb = document.getElementById("fb");
+  fb.textContent = ok ? "✓ 答对啦！💎 +1" : "✗ 没关系，记住它！";
+  fb.className = "feedback " + (ok?"fb-ok":"fb-no");
+  const rv = document.getElementById("reveal"); rv.classList.add("show");
+  const nb = document.getElementById("nextBtn");
+  nb.textContent = state.i===state.deck.length-1 ? "看结果 🏁" : "下一张 →";
+  nb.style.display = "block";
+  nb.scrollIntoView({behavior:"smooth", block:"nearest"});
+  document.querySelector(".diamonds").textContent = "💎 × " + state.diamond;
+}
+
+function nextCard(){
+  if (state.i >= state.deck.length-1){ finishRound(); return; }
+  state.i++; state.answered=false; render();
+}
+
+function finishRound(){
+  state.phase="result";
+  // save to history
+  try {
+    const h = JSON.parse(localStorage.getItem("history")||"[]");
+    h.push({date:new Date().toISOString().slice(0,10), wrong: state.results.filter(r=>!r.ok).map(r=>r.zi), total: state.results.length});
+    localStorage.setItem("history", JSON.stringify(h));
+  } catch(e){}
+  render();
+}
+
+function renderResult(){
+  const wrong = state.results.filter(r=>!r.ok);
+  const app = document.getElementById("app");
+  const summary = "识字测试结果：答对 " + state.score + "/" + state.results.length +
+    (wrong.length ? "，错字：" + wrong.map(r=>r.zi+"("+r.py+","+r.lesson+")").join("、") : "，全对！");
+  app.innerHTML = `<div class="done">
+    <div class="big">${wrong.length===0?"🏆":"🎉"}</div>
+    <div class="msg">本轮答对 <b>${state.score}</b> / ${state.results.length}<br>
+    获得 <span class="diamonds">💎 × ${state.diamond}</span> 钻石！
+    ${wrong.length?`<br>错字：${wrong.map(r=>`<b>${r.zi}</b>`).join("、")}`:""}</div>
+    <div class="result" id="summary">${summary}</div>
+    <button class="next" onclick="copyResult()">📋 复制结果（发给老师）</button>
+    <button class="small" onclick="startRound()">再来一轮 🔄</button></div>`;
+  // avoid auto-asking again next page load
+  try { localStorage.setItem("theme", localStorage.getItem("theme")||"dark"); } catch(e){}
+}
+
+function copyResult(){
+  const s = document.getElementById("summary").textContent;
+  const done = ()=>{ document.querySelector(".next").textContent = "✅ 已复制，去微信粘贴给老师吧！"; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(s).then(done).catch(()=>fallbackCopy(s,done));
+  else fallbackCopy(s,done);
+}
+function fallbackCopy(s,done){
+  const ta = document.createElement("textarea"); ta.value=s; document.body.appendChild(ta);
+  ta.select(); try{document.execCommand("copy"); done();}catch(e){alert(s);} document.body.removeChild(ta);
+}
+
+render();
+</script>
+</body>
+</html>
