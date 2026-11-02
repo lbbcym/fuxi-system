@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --c-bg: #f5f3ee; --c-fg: #2b2b2b; --c-muted: #77726a; --c-card: #ffffff;
+    --c-border: #ddd6cc; --c-accent: #4f7ae0; --c-btn-text: #ffffff;
+    --c-ok: #16a34a; --c-no: #dc2626; --c-gem: #8b5cf6;
+  }
+  body.dark {
+    --c-bg: #1c1c20; --c-fg: #ececec; --c-muted: #9a958d; --c-card: #2a2a30;
+    --c-border: #44444c; --c-accent: #6b93ea; --c-btn-text: #10131a;
+    --c-ok: #34d374; --c-no: #f05a5a; --c-gem: #b18cff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 18px; background: var(--c-bg); color: var(--c-fg);
+         font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .card { max-width: 420px; margin: 0 auto; }
+  .theme-toggle { position: fixed; top: 12px; right: 12px; z-index: 10; font-size: 20px;
+    border: 1px solid var(--c-border); background: var(--c-card); color: var(--c-fg);
+    border-radius: 50%; width: 40px; height: 40px; cursor: pointer; }
+  .progress { font-size: 14px; color: var(--c-muted); margin-bottom: 8px; }
+  .zi { font-size: 88px; font-weight: 700; line-height: 1.2; text-align: center; margin: 10px 0 4px; font-family: "KaiTi","STKaiti",serif; }
+  .hint { text-align: center; font-size: 14px; color: var(--c-muted); margin-bottom: 14px; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opt { padding: 14px 8px; border: 1.5px solid var(--c-border); border-radius: 12px; background: var(--c-card); color: var(--c-fg);
+         font-size: 20px; text-align: center; cursor: pointer; user-select: none; transition: all .15s; }
+  .opt:hover { border-color: var(--c-accent); }
+  .opt.right { border-color: var(--c-ok); background: rgba(34,197,94,.15); }
+  .opt.wrong { border-color: var(--c-no); background: rgba(239,68,68,.15); }
+  .reveal { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--c-card); border: 1.5px solid var(--c-border); }
+  .reveal.show { display: block; }
+  .reveal .py { font-size: 22px; font-weight: 600; }
+  .reveal .words { margin-top: 6px; font-size: 16px; color: var(--c-muted); }
+  .reveal .sentence { margin-top: 6px; font-size: 15px; }
+  .next { margin-top: 14px; width: 100%; padding: 13px; border: none; border-radius: 12px;
+          background: var(--c-accent); color: var(--c-btn-text); font-size: 17px; font-weight: 700; cursor: pointer; }
+  .score { display: flex; justify-content: space-between; align-items: center; font-size: 15px; }
+  .diamonds { color: var(--c-gem); font-weight: 700; }
+  .done { text-align: center; padding: 30px 10px; }
+  .done .big { font-size: 46px; }
+  .done .msg { margin: 10px 0 18px; font-size: 16px; color: var(--c-muted); }
+  .feedback { text-align:center; font-size:15px; height: 22px; margin-top:10px; font-weight:600; }
+  .fb-ok { color: var(--c-ok); } .fb-no { color: var(--c-no); }
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()" title="切换明暗">🌙</button>
+<div class="card" id="app"></div>
+<script>
+function toggleTheme(){
+  const d = document.body.classList.toggle("dark");
+  document.querySelector(".theme-toggle").textContent = d ? "☀️" : "🌙";
+  try { localStorage.setItem("theme", d ? "dark" : "light"); } catch(e){}
+}
+try { const saved = localStorage.getItem("theme"); if (saved === "light") { /* 用户显式选了浅色 */ } else { document.body.classList.add("dark"); document.querySelector(".theme-toggle").textContent = "☀️"; } } catch(e){ document.body.classList.add("dark"); document.querySelector(".theme-toggle").textContent = "☀️"; }
+</script>
+<script>
+const CARDS = [
+  {zi:"茶", py:"chá", words:"茶叶、喝茶、茶杯", sentence:"爷爷喜欢一边看报一边喝茶。"},
+  {zi:"饱", py:"bǎo", words:"吃饱、饱和、饱满", sentence:"小明吃得饱饱的，有力气跑步了。"},
+  {zi:"轻", py:"qīng", words:"轻轻、轻重、轻声", sentence:"妹妹睡着了，妈妈轻轻地把门关上。"},
+  {zi:"炮", py:"pào", words:"大炮、鞭炮、炮火", sentence:"过年了，窗外响起了鞭炮声。"},
+  {zi:"偷", py:"tōu", words:"小偷、偷看、偷偷", sentence:"小花猫偷偷地藏在门后面。"},
+  {zi:"泉", py:"quán", words:"泉水、温泉、清泉", sentence:"山里的清泉叮叮咚咚地流着。"},
+  {zi:"浪", py:"làng", words:"浪花、海浪、波浪", sentence:"雪白的浪花亲吻着小朋友的脚丫。"},
+  {zi:"壳", py:"ké", words:"贝壳、蛋壳、外壳", sentence:"我在沙滩上捡到了一个漂亮的贝壳。"}
+];
+const state = {i:0, score:0, diamond:0, answered:false};
+const app = document.getElementById("app");
+
+function render() {
+  if (state.i >= CARDS.length) {
+    app.innerHTML = `<div class="done">
+      <div class="big">🎉</div>
+      <div class="msg">测试完成！答对 <b>${state.score}</b> / ${CARDS.length} 题<br>
+      获得 <span class="diamonds">💎 × ${state.diamond}</span> 钻石！</div>
+      <button class="next" onclick="window.hermes.send('卡片测试做完了，结果如何？请告诉我下次该复习哪些字')">做完啦！</button>
+    </div>`;
+    return;
+  }
+  const c = CARDS[state.i];
+  // build 4 pinyin options: correct + 3 random others
+  const pool = CARDS.filter(x=>x!==c).map(x=>x.py);
+  const opts = [c.py, ...pool.sort(()=>Math.random()-.5).slice(0,3)].sort(()=>Math.random()-.5);
+  app.innerHTML = `
+    <div class="score">
+      <span>第 ${state.i+1} / ${CARDS.length} 张</span>
+      <span class="diamonds">💎 × ${state.diamond}</span>
+    </div>
+    <div class="zi">${c.zi}</div>
+    <div class="hint">这个字怎么读？选一选吧 👇</div>
+    <div class="opts">${opts.map(o=>`<div class="opt" data-py="${o}" onclick="pick(this)">${o}</div>`).join("")}</div>
+    <div class="feedback" id="fb"></div>
+    <div class="reveal" id="reveal">
+      <div class="py">${c.zi} ${c.py}</div>
+      <div class="words">组词：${c.words}</div>
+      <div class="sentence">📖 ${c.sentence}</div>
+    </div>
+    <button class="next" id="nextBtn" style="display:none" onclick="nextCard()">下一张 →</button>`;
+}
+
+function pick(el) {
+  if (state.answered) return;
+  state.answered = true;
+  const c = CARDS[state.i];
+  const ok = el.dataset.py === c.py;
+  el.classList.add(ok ? "right" : "wrong");
+  if (!ok) [...document.querySelectorAll(".opt")].find(o=>o.dataset.py===c.py).classList.add("right");
+  if (ok) { state.score++; state.diamond += 1; }
+  const fb = document.getElementById("fb");
+  fb.textContent = ok ? "✓ 答对啦！💎 +1" : "✗ 没关系，记住它！";
+  fb.className = "feedback " + (ok ? "fb-ok" : "fb-no");
+  document.getElementById("reveal").classList.add("show");
+  const nb = document.getElementById("nextBtn");
+  nb.style.display = "block";
+  nb.scrollIntoView({behavior:"smooth", block:"nearest"});
+  // refresh diamond display
+  document.querySelector(".diamonds").textContent = "💎 × " + state.diamond;
+}
+function nextCard() { state.i++; state.answered = false; render(); }
+render();
+</script>
+</body>
+</html>
